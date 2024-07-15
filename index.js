@@ -69,6 +69,7 @@ app.post("/api/referrals", async (req, res) => {
     });
 
     // Send referral email
+    console.log("hhhhh" , referral);
     await sendReferralEmail(referral);
 
     res.status(201).json(referral);
