@@ -6,18 +6,14 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'], // Enable Prisma logging
-});
+const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Helper function to send email using Google Mail Service API
 async function sendReferralEmail(referral) {
   console.log(referral);
   let transporter = nodemailer.createTransport({
@@ -44,37 +40,31 @@ async function sendReferralEmail(referral) {
   });
 }
 
-// REST API endpoints
 app.post("/api/referrals", async (req, res) => {
   const { referrerName, referrerEmail, refereeName, refereeEmail } = req.body;
-  console.log("Request received with data:", req.body);
 
-  // Validate input
+
   if (!referrerName || !referrerEmail || !refereeName || !refereeEmail) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
-  // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(referrerEmail) || !emailRegex.test(refereeEmail)) {
     return res.status(400).json({ error: "Invalid email format" });
   }
 
-  // Basic name validation (no numbers)
   const nameRegex = /^[a-zA-Z\s]*$/;
   if (!nameRegex.test(referrerName) || !nameRegex.test(refereeName)) {
     return res.status(400).json({ error: "Names should not contain numbers" });
   }
 
   try {
-    console.log("Creating referral with data:", { referrerName, referrerEmail, refereeName, refereeEmail });
+    
     const referral = await prisma.referral.create({
       data: { referrerName, referrerEmail, refereeName, refereeEmail },
     });
 
-    console.log("Referral created successfully:", referral);
-
-    // Send referral email
+    
     await sendReferralEmail(referral);
 
     res.status(201).json(referral);

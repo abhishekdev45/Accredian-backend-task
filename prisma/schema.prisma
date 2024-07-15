@@ -1,6 +1,7 @@
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 generator client {
@@ -8,10 +9,10 @@ generator client {
 }
 
 model Referral {
-  id            Int      @id @default(autoincrement())
-  referrerName  String
+  id           Int      @id @default(autoincrement())
+  referrerName String
   referrerEmail String  
-  refereeName   String
-  refereeEmail  String   @unique
-  createdAt     DateTime @default(now())
+  refereeName  String
+  refereeEmail String  
+  createdAt    DateTime @default(now())
 }
