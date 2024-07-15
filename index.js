@@ -1,4 +1,3 @@
-// index.js
 const express = require("express");
 const bodyParser = require("body-parser");
 const { PrismaClient } = require("@prisma/client");
@@ -7,8 +6,12 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'], // Enable Prisma logging
+});
 const PORT = process.env.PORT || 3000;
+
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 // Middleware
 app.use(cors());
@@ -44,7 +47,8 @@ async function sendReferralEmail(referral) {
 // REST API endpoints
 app.post("/api/referrals", async (req, res) => {
   const { referrerName, referrerEmail, refereeName, refereeEmail } = req.body;
-  console.log("hi1", referrerName);
+  console.log("Request received with data:", req.body);
+
   // Validate input
   if (!referrerName || !referrerEmail || !refereeName || !refereeEmail) {
     return res.status(400).json({ error: "All fields are required" });
@@ -63,23 +67,24 @@ app.post("/api/referrals", async (req, res) => {
   }
 
   try {
-    console.log("hi2", refereeName);
+    console.log("Creating referral with data:", { referrerName, referrerEmail, refereeName, refereeEmail });
     const referral = await prisma.referral.create({
       data: { referrerName, referrerEmail, refereeName, refereeEmail },
     });
 
+    console.log("Referral created successfully:", referral);
+
     // Send referral email
-    console.log("hhhhh" , referral);
     await sendReferralEmail(referral);
 
     res.status(201).json(referral);
   } catch (error) {
+    console.error("Error creating referral:", error);
+
     if (error.code === "P2002") {
       res.status(400).json({ error: "Email already exists" });
     } else {
-      res
-        .status(500)
-        .json({ error: "An error occurred while creating the referral" });
+      res.status(500).json({ error: "An error occurred while creating the referral" });
     }
   }
 });
